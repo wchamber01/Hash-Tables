@@ -9,14 +9,15 @@ class HashTableEntry:
         self.next = None
 
 
-class HashTable:
+class HashTable(storage):
     """
     A hash table that with `capacity` buckets
     that accepts string keys
 
     Implement this.
-    """
-
+    """ 
+    hash_table = [None] * storage
+    
     def fnv1(self, key):
         """
         FNV-1 64-bit hash function
@@ -47,6 +48,8 @@ class HashTable:
 
         Implement this.
         """
+        index = self.hash_index(key)
+        hash_table[index] = value
 
     def delete(self, key):
         """
@@ -56,6 +59,8 @@ class HashTable:
 
         Implement this.
         """
+        index = self.hash_index(key)
+        hash_table[index] = None
 
     def get(self, key):
         """
@@ -65,6 +70,8 @@ class HashTable:
 
         Implement this.
         """
+        index = self.hash_index(key)
+        return self.hash_table[index]
 
     def resize(self):
         """
@@ -73,6 +80,7 @@ class HashTable:
 
         Implement this.
         """
+        self.storage = self.storage * 2
 
 if __name__ == "__main__":
     ht = HashTable(2)
