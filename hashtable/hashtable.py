@@ -21,6 +21,7 @@ class HashTable:
         self.capacity = capacity
         self.storage = [None] * capacity
         self.key_count = 0
+        # self.load_factor = self.key_count // self.capacity
 
     def fnv1(self, key):
         """
@@ -70,9 +71,15 @@ class HashTable:
         index = self.hash_index(key)
         node = self.storage[index]
         HTE = HashTableEntry(key, value)
+        # load_factor = None
+        load_factor = self.key_count / self.capacity
+        print('load_factor ln 76:', load_factor)
 
         if node is None:
             self.storage[index] = HTE
+            print(self.key_count)
+            self.key_count += 1
+            print('load_factor ln 82:', load_factor, '\n')
             return
             # Assign the next value of the index to the hash
 
@@ -81,11 +88,13 @@ class HashTable:
             if node.key == key:
                 node.value = value
                 return
-
             prev = node
             node = node.next
-
         prev.next = HTE
+        self.key_count += 1
+
+        if load_factor > 0.7:
+            new_capacity =
 
     def delete(self, key):
         """
@@ -93,29 +102,40 @@ class HashTable:
         Print a warning if the key is not found.
         Implement this.
         """
-        current = self.head
-        load_factor = None
+        # current = self.head
+        # load_factor = None
         # While current node exists and starting at the head
-        while current:
-            # If the current node's key is equal to the key being passed in
-            if current.key == key:
-                # Reset current node's key to None
-                current.key = None
-                # Reduce key_count by 1
-                self.key_count -= 1
-                # Set a new load_factor with the reduced key_count
-                load_factor = self.key_count / self.capacity
-                # If load_factor is < 0.2
-                if load_factor < 0.2:
-                    # Halve the size of the hashtable
-                    self.resize(self.capacity // 2)
-                    # Set load_factor to new size
-                    load_factor = self.key_count / self.capacity
-            else:
-                # Advance current node to next node before looping
-                current = current.next
-        # If no more nodes exist return none
-        return None
+        # while current:
+        #     # If the current node's key is equal to the key being passed in
+        #     if current.key == key:
+        #         # Reset current node's key to None
+        #         current.key = None
+        #         # Reduce key_count by 1
+        #         self.key_count -= 1
+        #         # Set a new load_factor with the reduced key_count
+        #         load_factor = self.key_count / self.capacity
+        #         # If load_factor is < 0.2
+        #         if load_factor < 0.2:
+        #             # Halve the size of the hashtable
+        #             self.resize(self.capacity // 2)
+        #             # Set load_factor to new size
+        #             load_factor = self.key_count / self.capacity
+        #     else:
+        #         # Advance current node to next node before looping
+        #         current = current.next
+        # # If no more nodes exist return none
+        # return None
+
+        index = self.hash_index(key)
+        node = self.storage[index]
+
+        while node is not None and node.key != key:
+            node = node.next
+
+        if node is None:
+            return None
+        else:
+            node.key = None
 
     def get(self, key):
         """
@@ -169,21 +189,18 @@ class HashTable:
                 self.put(node.key, node.value)
                 node = node.next
 
-        # each_slot = 0
-        # for node in self.storage:
-        #     each_slot += 1
-
-        # load_factor = self.key_count / each_slot
-
 
 if __name__ == "__main__":
     ht = HashTable(2)
 
     ht.put("line_1", "Tiny hash table")
+    print('key 1:', ht.key_count, '\n')
     ht.put("line_2", "Filled beyond capacity")
+    print('key 2:', ht.key_count, '\n')
     ht.put("line_3", "Linked list saves the day!")
+    print('key 3:', ht.key_count, '\n')
 
-    print("")
+    print("l")
 
     # Test storing beyond capacity
     print(ht.get("line_1"))
@@ -192,7 +209,9 @@ if __name__ == "__main__":
 
     # Test resizing
     old_capacity = len(ht.storage)
+    print('old_capacity:', old_capacity)
     new_capacity = len(ht.storage) * 2
+    print('new_capacity:', new_capacity)
     ht.resize(new_capacity)
 
     print(f"\nResized from {old_capacity} to {new_capacity}.\n")
