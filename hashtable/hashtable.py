@@ -19,6 +19,7 @@ class HashTable:
     def __init__(self, capacity):
         self.capacity = capacity
         self.storage = [None] * capacity
+        self.head = None
 
     def fnv1(self, key):
         """
@@ -57,15 +58,20 @@ class HashTable:
         Hash collisions should be handled with Linked List Chaining.
         Implement this.
         """
+        # Find the hash index
         index = self.hash_index(key)
         node = self.storage[index]
-        # if key exists in storage
+        new_node = HashTableEntry(key, value)
+        # if node exists in storage
         if node:
             # then replace the value
             node = value
-        # else create a new entry with HashTableEntry
+        # else create a new node
         else:
-            HashTableEntry(key, value)
+            new_node.next = self.head
+            self.head = new_node
+
+        return new_node
 
     def delete(self, key):
         """
@@ -73,8 +79,18 @@ class HashTable:
         Print a warning if the key is not found.
         Implement this.
         """
-        index = self.hash_index(key)
-        self.storage[index] = None
+        current = self.head
+        # While current node exists
+        while current:
+            # If the current node's key is equal to the key being passed in
+            if current.key == key:
+                # Reset current node's key to None
+                current.key = None
+            else:
+                # Advance current node to next node before looping
+                current = current.next
+        # If no more nodes exist return none
+        return None
 
     def get(self, key):
         """
@@ -82,11 +98,18 @@ class HashTable:
         Returns None if the key is not found.
         Implement this.
         """
-        index = self.hash_index(key)
-        if index:
-            return self.storage[index]
-        else:
-            return None
+        current = self.head
+        # While the current node exists
+        while current:
+            # If the current node's key is equal to the key being passed in
+            if current.key == key:
+                # Return current node's value
+                return current.value
+            else:
+                # Advance current node to next node before looping
+                current = current.next
+        # Else return None
+        return None
 
     def resize(self, new_capacity):
         """
@@ -95,8 +118,8 @@ class HashTable:
         Implement this.
         """
         # double the capacity
-        self.capacity *= 2
-        new_storage = [None] * self.capacity
+        # self.capacity = new_capacity * 2
+        new_storage = [None] * new_capacity
         for value in self.storage:
             if value:
                 hashed_key = self.hash_index(value[0])
@@ -120,7 +143,7 @@ if __name__ == "__main__":
 
     # Test resizing
     old_capacity = len(ht.storage)
-    new_capacity = len(ht.storage)
+    new_capacity = len(ht.storage) * 2
     ht.resize(new_capacity)
 
     print(f"\nResized from {old_capacity} to {new_capacity}.\n")
