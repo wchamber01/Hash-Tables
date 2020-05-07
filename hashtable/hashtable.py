@@ -53,6 +53,13 @@ class HashTable:
         # return self.fnv1(key) % self.capacity
         return self.djb2(key) % self.capacity
 
+    def calc_load_factor(self):
+        load_factor = self.key_count / self.capacity
+        if load_factor > 0.7:
+            self.resize(self.capacity*2)
+        elif load_factor < 0.2 and self.capacity > 8:
+            self.resize(load_factor // 2)
+
     def put(self, key, value):
         """
         Store the value with the given key.
@@ -67,38 +74,58 @@ class HashTable:
         # # Set key_count
         # # Set load_factor
         # return new_node
+
+        # Define the hash index/key
         index = self.hash_index(key)
+        # Define the storage index
         node = self.storage[index]
         HTE = HashTableEntry(key, value)
         prev = None
-        load_factor = self.key_count / self.capacity
 
         # print('load_factor ln 76:', load_factor)
 
         if node is None:
             self.storage[index] = HTE
             self.key_count += 1
-            # print('load_factor ln 82:', load_factor, '\n')
-            if load_factor > 0.7:
-                self.resize(self.capacity*2)
+            self.calc_load_factor()
             return
-            # Assign the next value of the index to the hash
 
-        # while node is not None:
         if node.key == key:
             node.value = value
             return
+
         while node.key != key:
             if node.next is None:
                 node.next = HTE
                 self.key_count += 1
-                if load_factor > 0.7:
-                    self.resize(self.capacity*2)
+                self.load_factor()
                 return
             node = node.next
+
             if node.key == key:
                 node.value = value
                 return
+
+        # if load_factor > 0.7:
+        #     self.resize(self.capacity*2)
+        # return
+        #     # Assign the next value of the index to the hash
+
+        # # while node is not None:
+        # if node.key == key:
+        #     node.value = value
+        #     return
+        # while node.key != key:
+        #     if node.next is None:
+        #         node.next = HTE
+        #         self.key_count += 1
+        #         if load_factor > 0.7:
+        #             self.resize(self.capacity*2)
+        #         return
+        #     node = node.next
+        #     if node.key == key:
+        #         node.value = value
+        #         return
 
     def delete(self, key):
         """
@@ -130,9 +157,9 @@ class HashTable:
         # # If no more nodes exist return none
         # return None
 
-        index = self.hash_index(key)
-        node = self.storage[index]
-        prev = None
+        # index = self.hash_index(key)
+        # node = self.storage[index]
+        # prev = None
 
         # while node is not None and node.key != key:
         #     prev = node
@@ -148,41 +175,32 @@ class HashTable:
 
         index = self.hash_index(key)
         node = self.storage[index]
+        prev = None
+
         if node is None or self.key_count == 0:
             return None
-            if node.next is None:
-                if node.key == key:
-                    deleted_val = node.value
-                    self.storage[index] = None
-                    self.key_count -= 1
-                    load_factor = self.key_count/self.capacity
-                    print('xxxLOADxxx', load_factor)
-                    if load_factor < 0.2 and self.capacity > 8:
-                        half = load_factor//2
-                        print('xxxHALFxxx', half)
-                        self.resize(half)
-                        print('xxxLOADxxx', load_factor)
-                    return deleted_val
-                else:
-                    return None
-            prev = None
-            while node:
-                if node.key == key:
-                    deleted_val = node.value
-                    self.size -= 1
-                    node.key = None
-                    prev.next = node.next
-                    load_factor = self.size/self.capacity
-                    print('xxxLOADxxx', load_factor)
-                    if load_factor < 0.2 and self.capacity > 8:
-                        half = load_factor // 2
-                        print('xxxHALFxxx', half)
-                        self.resize(half)
-                        print('xxxLOADxxx', load_factor)
-                    return deleted_val
-                prev = node
-                node = node.next
-            return None
+
+        if node.next is None:
+            if node.key == key:
+                del_value = node.value
+                self.storage[index] = None
+                self.key_count -= 1
+                self.calc_load_factor()
+                return del_value
+            else:
+                return None
+
+        while node:
+            if node.key == key:
+                del_value = node.value
+                self.key_count -= 1
+                node.key = None
+                prev.next = node.next
+                self.calc_load_factor()
+                return del_value
+            prev = node
+            node = node.next
+        return None
 
     def get(self, key):
         """
@@ -205,13 +223,13 @@ class HashTable:
         index = self.hash_index(key)
         node = self.storage[index]
 
-        while node is not None and node.key != key:
-            node = node.next
-
         if node is None:
             return None
-        else:
-            return node.value
+        while node.key != key:
+            if node.next is None:
+                return None
+            node = node.next
+        return node.value
 
     def resize(self, new_capacity):
         """
