@@ -21,7 +21,6 @@ class HashTable:
         self.capacity = capacity
         self.storage = [None] * capacity
         self.key_count = 0
-        # self.load_factor = self.key_count // self.capacity
 
     def fnv1(self, key):
         """
@@ -71,30 +70,35 @@ class HashTable:
         index = self.hash_index(key)
         node = self.storage[index]
         HTE = HashTableEntry(key, value)
-        # load_factor = None
+        prev = None
         load_factor = self.key_count / self.capacity
-        print('load_factor ln 76:', load_factor)
+
+        # print('load_factor ln 76:', load_factor)
 
         if node is None:
             self.storage[index] = HTE
-            print(self.key_count)
             self.key_count += 1
-            print('load_factor ln 82:', load_factor, '\n')
+            # print('load_factor ln 82:', load_factor, '\n')
+            if load_factor > 0.7:
+                self.resize(self.capacity*2)
             return
             # Assign the next value of the index to the hash
 
-        prev = node
-        while node is not None:
+        # while node is not None:
+        if node.key == key:
+            node.value = value
+            return
+        while node.key != key:
+            if node.next is None:
+                node.next = HTE
+                self.key_count += 1
+                if load_factor > 0.7:
+                    self.resize(self.capacity*2)
+                return
+            node = node.next
             if node.key == key:
                 node.value = value
                 return
-            prev = node
-            node = node.next
-        prev.next = HTE
-        self.key_count += 1
-
-        if load_factor > 0.7:
-            new_capacity =
 
     def delete(self, key):
         """
@@ -128,14 +132,57 @@ class HashTable:
 
         index = self.hash_index(key)
         node = self.storage[index]
+        prev = None
 
-        while node is not None and node.key != key:
-            node = node.next
+        # while node is not None and node.key != key:
+        #     prev = node
+        #     node = node.next
 
-        if node is None:
+        # if node is None:
+        #     return None
+        # elif node.key == key and node.next is not None:
+        #     prev.next = node.next
+        #     node.key = None
+        # elif node.next is None and node.key == key:
+        #     self.storage[index] = None
+
+        index = self.hash_index(key)
+        node = self.storage[index]
+        if node is None or self.key_count == 0:
             return None
-        else:
-            node.key = None
+            if node.next is None:
+                if node.key == key:
+                    deleted_val = node.value
+                    self.storage[index] = None
+                    self.key_count -= 1
+                    load_factor = self.key_count/self.capacity
+                    print('xxxLOADxxx', load_factor)
+                    if load_factor < 0.2 and self.capacity > 8:
+                        half = load_factor//2
+                        print('xxxHALFxxx', half)
+                        self.resize(half)
+                        print('xxxLOADxxx', load_factor)
+                    return deleted_val
+                else:
+                    return None
+            prev = None
+            while node:
+                if node.key == key:
+                    deleted_val = node.value
+                    self.size -= 1
+                    node.key = None
+                    prev.next = node.next
+                    load_factor = self.size/self.capacity
+                    print('xxxLOADxxx', load_factor)
+                    if load_factor < 0.2 and self.capacity > 8:
+                        half = load_factor // 2
+                        print('xxxHALFxxx', half)
+                        self.resize(half)
+                        print('xxxLOADxxx', load_factor)
+                    return deleted_val
+                prev = node
+                node = node.next
+            return None
 
     def get(self, key):
         """
@@ -181,26 +228,29 @@ class HashTable:
         #         new_storage[hashed_key] = value
         # self.storage = new_storage
 
-        new_storage = [None] * new_capacity
-        old_storage = self.storage
-        self.storage = new_storage
-        for node in old_storage:
-            while node is not None:
-                self.put(node.key, node.value)
-                node = node.next
+        # old_storage = self.storage
+        # print('new_capacity:', new_capacity)
+        self.capacity = new_capacity
+        self.capacity = max((self.capacity), 8)
+        new_storage = [None] * self.capacity
+        for node in self.storage:
+            if node is not None:
+                hashed_key = self.hash_index(node.key)
+                new_storage[hashed_key] = node
+            self.storage = new_storage
 
 
 if __name__ == "__main__":
     ht = HashTable(2)
 
     ht.put("line_1", "Tiny hash table")
-    print('key 1:', ht.key_count, '\n')
+    # print('key 1:', ht.key_count, '\n')
     ht.put("line_2", "Filled beyond capacity")
-    print('key 2:', ht.key_count, '\n')
+    # print('key 2:', ht.key_count, '\n')
     ht.put("line_3", "Linked list saves the day!")
-    print('key 3:', ht.key_count, '\n')
+    # print('key 3:', ht.key_count, '\n')
 
-    print("l")
+    print("")
 
     # Test storing beyond capacity
     print(ht.get("line_1"))
@@ -209,9 +259,9 @@ if __name__ == "__main__":
 
     # Test resizing
     old_capacity = len(ht.storage)
-    print('old_capacity:', old_capacity)
+    # print('old_capacity:', old_capacity)
     new_capacity = len(ht.storage) * 2
-    print('new_capacity:', new_capacity)
+    # print('new_capacity:', new_capacity)
     ht.resize(new_capacity)
 
     print(f"\nResized from {old_capacity} to {new_capacity}.\n")
